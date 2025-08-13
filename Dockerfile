@@ -6,6 +6,7 @@ RUN npm ci
 
 # Stage 2: Build the Next.js application
 COPY . .
+RUN ls -la /app
 RUN npm run build
 
 # Stage 3: Run the Next.js application

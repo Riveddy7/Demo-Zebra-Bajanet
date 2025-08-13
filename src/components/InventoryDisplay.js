@@ -7,7 +7,7 @@ import InventoryItem from './InventoryItem';
 import InboxIcon from '@mui/icons-material/Inbox';
 import RouterIcon from '@mui/icons-material/Router';
 
-const InventoryDisplay = ({ antennaData = [] }) => {
+const InventoryDisplay = ({ antennaData = [], alertedTags = new Set(), onAddAlert, onRemoveAlert }) => {
   if (antennaData.length === 0) {
     return (
       <Box sx={{ textAlign: 'center', mt: 10, color: 'text.secondary' }}>
@@ -22,24 +22,6 @@ const InventoryDisplay = ({ antennaData = [] }) => {
 
   return (
     <Box>
-      {/* Resumen general */}
-      <Card sx={{ mb: 3, background: 'linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)' }}>
-        <CardContent>
-          <Typography variant="h5" component="h2" sx={{ color: 'white', fontWeight: 'bold' }}>
-            Resumen del Inventario
-          </Typography>
-          <Box display="flex" gap={2} mt={1}>
-            <Chip 
-              label={`${antennaData.length} Antena${antennaData.length !== 1 ? 's' : ''}`} 
-              sx={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }} 
-            />
-            <Chip 
-              label={`${totalTags} Tag${totalTags !== 1 ? 's' : ''} Únicos`} 
-              sx={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }} 
-            />
-          </Box>
-        </CardContent>
-      </Card>
 
       {/* Datos por antena */}
       {antennaData.map((antennaGroup) => (
@@ -61,7 +43,12 @@ const InventoryDisplay = ({ antennaData = [] }) => {
               <Grid container spacing={2}>
                 {antennaGroup.tags.map((tag) => (
                   <Grid item key={`${antennaGroup.antenna}-${tag.idHex}`}>
-                    <InventoryItem tag={tag} />
+                    <InventoryItem 
+                      tag={tag} 
+                      hasAlert={alertedTags.has(tag.idHex)}
+                      onAddAlert={() => onAddAlert(tag)}
+                      onRemoveAlert={() => onRemoveAlert(tag.idHex)}
+                    />
                   </Grid>
                 ))}
               </Grid>

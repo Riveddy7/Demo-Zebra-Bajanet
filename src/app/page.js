@@ -174,8 +174,9 @@ export default function Home() {
   const [lastUpdate, setLastUpdate] = useState(null);
   const [isScanning, setIsScanning] = useState(true);
   const [frozenData, setFrozenData] = useState([]);
-  const [alertedTags, setAlertedTags] = useState(new Set());
-  const [tagAlerts, setTagAlerts] = useState(new Map());
+  const [alertedTags, setAlertedTags] = useState(new Set()); // Tags marcados para vigilar
+  const [tagAlerts, setTagAlerts] = useState(new Map()); // Info de tags vigilados
+  const [activeAlerts, setActiveAlerts] = useState(new Set()); // Tags que están alertando ahora
   const [notifications, setNotifications] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
 
@@ -194,7 +195,7 @@ export default function Home() {
 
   const theme = createShrineTheme(darkMode);
 
-  // Sistema de alertas y notificaciones
+  // Sistema de alertas y notificaciones corregido
   const checkTagAlerts = (currentData) => {
     scanCountRef.current++;
     const currentTags = new Set();
@@ -207,33 +208,74 @@ export default function Home() {
       });
     });
     
-    // Verificar tags con alertas que han desaparecido
+    const newActiveAlerts = new Set();
+    const newNotifications = [];
+    
+    // Verificar tags marcados para alerta
     tagAlerts.forEach((alertData, tagId) => {
       const lastSeen = tagHistoryRef.current.get(tagId) || 0;
       const scansSinceLastSeen = scanCountRef.current - lastSeen;
+      const isCurrentlyPresent = currentTags.has(tagId);
+      const wasAlerting = activeAlerts.has(tagId);
       
-      if (scansSinceLastSeen >= 2 && !notifications.find(n => n.tagId === tagId && n.active)) {
-        const notification = {
-          id: Date.now(),
-          tagId: tagId,
-          message: `¡ALERTA! Tag ${tagId.slice(0, 8)}... no detectado hace ${scansSinceLastSeen} escaneos`,
-          active: true,
-          timestamp: new Date(),
-        };
-        setNotifications(prev => [...prev, notification]);
+      if (!isCurrentlyPresent && scansSinceLastSeen >= 3) {
+        // Tag desaparecido por 3+ escaneos -> activar alerta
+        newActiveAlerts.add(tagId);
         
-        // Verificar si las notificaciones están disponibles antes de usarlas
-        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-          try {
-            new Notification('IAMET RFID Alert', {
-              body: notification.message,
-              icon: '/favicon.ico'
-            });
-          } catch (error) {
-            console.log('Notification not supported:', error);
+        // Si no estaba alertando antes, crear notificación
+        if (!wasAlerting) {
+          const notification = {
+            id: Date.now() + Math.random(), // ID único
+            tagId: tagId,
+            message: `¡ALERTA! Tag ${tagId.slice(0, 8)}... no detectado hace ${scansSinceLastSeen} escaneos`,
+            active: true,
+            timestamp: new Date(),
+          };
+          newNotifications.push(notification);
+          
+          // Notificación del navegador
+          if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+            try {
+              new Notification('IAMET RFID Alert', {
+                body: notification.message,
+                icon: '/favicon.ico'
+              });
+            } catch (error) {
+              console.log('Notification not supported:', error);
+            }
           }
         }
+      } else if (isCurrentlyPresent && wasAlerting) {
+        // Tag volvió a aparecer -> quitar alerta pero mantener vigilancia
+        // No se añade a newActiveAlerts, se mantiene en tagAlerts
+        console.log(`Tag ${tagId.slice(0, 8)} ha vuelto a aparecer - alerta desactivada, vigilancia mantenida`);
+        
+        // Opcional: crear notificación de regreso (comentado por ahora)
+        // const returnNotification = {
+        //   id: Date.now() + Math.random(),
+        //   tagId: tagId,
+        //   message: `✓ Tag ${tagId.slice(0, 8)}... ha vuelto a aparecer`,
+        //   active: true,
+        //   timestamp: new Date(),
+        //   type: 'success'
+        // };
+        // newNotifications.push(returnNotification);
       }
+    });
+    
+    // Actualizar alertas activas
+    setActiveAlerts(newActiveAlerts);
+    
+    // Añadir nuevas notificaciones y remover las de tags que volvieron
+    setNotifications(prev => {
+      // Filtrar notificaciones de tags que volvieron a aparecer
+      const filtered = prev.filter(notification => {
+        const tagStillMissing = newActiveAlerts.has(notification.tagId);
+        return tagStillMissing;
+      });
+      
+      // Añadir nuevas notificaciones
+      return [...filtered, ...newNotifications];
     });
   };
 
@@ -293,6 +335,7 @@ export default function Home() {
     });
     setTagAlerts(newAlerts);
     setAlertedTags(prev => new Set([...prev, tag.idHex]));
+    console.log(`Alerta activada para tag: ${tag.idHex.slice(0, 8)}`);
   };
 
   const removeTagAlert = (tagId) => {
@@ -305,8 +348,16 @@ export default function Home() {
       return newSet;
     });
     
+    // Remover de alertas activas
+    setActiveAlerts(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(tagId);
+      return newSet;
+    });
+    
     // Remover notificaciones activas
     setNotifications(prev => prev.filter(n => n.tagId !== tagId));
+    console.log(`Alerta desactivada para tag: ${tagId.slice(0, 8)}`);
   };
 
   const dismissNotification = (notificationId) => {
@@ -364,32 +415,32 @@ export default function Home() {
         <AppBar position="static" elevation={0}>
           <Toolbar sx={{ 
             justifyContent: 'space-between', 
-            px: { xs: 1, md: 4 },
+            px: { xs: 1.5, md: 4 },
             py: { xs: 0.5, md: 1 },
             minHeight: { xs: 56, md: 70 }
           }}>
-            <Box display="flex" alignItems="center" gap={{ xs: 1, md: 2 }}>
+            <Box display="flex" alignItems="center" gap={{ xs: 0.5, md: 2 }}>
               <Typography
-                variant={{ xs: 'h5', md: 'h4' }}
+                variant={{ xs: 'h6', md: 'h4' }}
                 sx={{
                   color: 'primary.main',
                   fontWeight: 500,
                   letterSpacing: '0.02em',
                 }}
               >
-                SHRINE
+                IAMET
               </Typography>
               <Box display={{ xs: 'none', sm: 'block' }}>
-                <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: 500 }}>
+                <Typography variant={{ xs: 'subtitle1', md: 'h6' }} sx={{ color: 'text.primary', fontWeight: 500 }}>
                   Inventory System
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: { xs: '0.7rem', md: '0.8rem' } }}>
                   RFID Asset Tracking
                 </Typography>
               </Box>
             </Box>
             
-            <Box display="flex" alignItems="center" gap={2}>
+            <Box display="flex" alignItems="center" gap={{ xs: 1, md: 2 }}>
               <IconButton
                 onClick={toggleDarkMode}
                 sx={{ 
@@ -466,7 +517,7 @@ export default function Home() {
                 </Box>
                 <Box>
                   <Typography variant={{ xs: 'h4', md: 'h3' }} sx={{ color: 'warning.main', fontWeight: 500 }}>
-                    {tagAlerts.size}
+                    {activeAlerts.size}
                   </Typography>
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     Alertas Activas
@@ -495,6 +546,7 @@ export default function Home() {
           <InventoryDisplay 
             antennaData={displayData}
             alertedTags={alertedTags}
+            activeAlerts={activeAlerts}
             onAddAlert={addTagAlert}
             onRemoveAlert={removeTagAlert}
             darkMode={darkMode}

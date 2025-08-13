@@ -7,7 +7,7 @@ import InventoryItem from './InventoryItem';
 import InboxIcon from '@mui/icons-material/Inbox';
 import RouterIcon from '@mui/icons-material/Router';
 
-const InventoryDisplay = ({ antennaData = [], alertedTags = new Set(), onAddAlert, onRemoveAlert, darkMode = false }) => {
+const InventoryDisplay = ({ antennaData = [], alertedTags = new Set(), activeAlerts = new Set(), onAddAlert, onRemoveAlert, darkMode = false }) => {
   if (antennaData.length === 0) {
     return (
       <Box sx={{ textAlign: 'center', mt: 10, color: 'text.secondary' }}>
@@ -29,11 +29,11 @@ const InventoryDisplay = ({ antennaData = [], alertedTags = new Set(), onAddAler
 
       {/* Datos por antena */}
       {antennaData.map((antennaGroup) => (
-        <Card key={antennaGroup.antenna} sx={{ mb: 4 }}>
-          <CardContent>
-            <Box display="flex" alignItems="center" gap={2} mb={3}>
-              <RouterIcon color="primary" sx={{ fontSize: 24 }} />
-              <Typography variant="h6" component="h3" color="primary" sx={{ fontWeight: 500 }}>
+        <Card key={antennaGroup.antenna} sx={{ mb: { xs: 2, md: 4 } }}>
+          <CardContent sx={{ pb: { xs: 1, md: 2 } }}>
+            <Box display="flex" alignItems="center" gap={{ xs: 1.5, md: 2 }} mb={{ xs: 2, md: 3 }}>
+              <RouterIcon color="primary" sx={{ fontSize: { xs: 20, md: 24 } }} />
+              <Typography variant={{ xs: 'subtitle1', md: 'h6' }} component="h3" color="primary" sx={{ fontWeight: 500 }}>
                 Antena {antennaGroup.antenna}
               </Typography>
               <Chip 
@@ -41,7 +41,7 @@ const InventoryDisplay = ({ antennaData = [], alertedTags = new Set(), onAddAler
                 size="small" 
                 variant="outlined"
                 color="primary"
-                sx={{ fontWeight: 500 }}
+                sx={{ fontWeight: 500, fontSize: { xs: '0.7rem', md: '0.75rem' } }}
               />
             </Box>
             
@@ -57,6 +57,7 @@ const InventoryDisplay = ({ antennaData = [], alertedTags = new Set(), onAddAler
                           <InventoryItem 
                             tag={tag} 
                             hasAlert={alertedTags.has(tag.idHex)}
+                            isAlerting={activeAlerts.has(tag.idHex)}
                             onAddAlert={() => onAddAlert(tag)}
                             onRemoveAlert={() => onRemoveAlert(tag.idHex)}
                             layout="card"
@@ -67,15 +68,16 @@ const InventoryDisplay = ({ antennaData = [], alertedTags = new Set(), onAddAler
                   </Grid>
                 </Box>
 
-                {/* Mobile Layout - List */}
+                {/* Mobile Layout - List compacto */}
                 <Box sx={{ display: { xs: 'block', md: 'none' } }}>
                   {antennaGroup.tags
                     .sort((a, b) => (b.peakRssi || -999) - (a.peakRssi || -999)) // Ordenar por RSSI descendente
                     .map((tag) => (
-                      <Box key={`${antennaGroup.antenna}-${tag.idHex}`} sx={{ mb: 1 }}>
+                      <Box key={`${antennaGroup.antenna}-${tag.idHex}`} sx={{ mb: 0.5 }}>
                         <InventoryItem 
                           tag={tag} 
                           hasAlert={alertedTags.has(tag.idHex)}
+                          isAlerting={activeAlerts.has(tag.idHex)}
                           onAddAlert={() => onAddAlert(tag)}
                           onRemoveAlert={() => onRemoveAlert(tag.idHex)}
                           layout="list"

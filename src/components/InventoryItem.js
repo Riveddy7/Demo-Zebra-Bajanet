@@ -11,7 +11,7 @@ import SignalWifi1BarIcon from '@mui/icons-material/SignalWifi1Bar';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import NotificationsOffIcon from '@mui/icons-material/NotificationsOff';
 
-const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layout = 'card', darkMode = false }) => {
+const InventoryItem = ({ tag, hasAlert = false, isAlerting = false, onAddAlert, onRemoveAlert, layout = 'card', darkMode = false }) => {
   // Si es un string simple (legacy), usar formato antiguo
   if (typeof tag === 'string') {
     return (
@@ -39,8 +39,8 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layou
     return <SignalWifi1BarIcon sx={{ color: 'red' }} />;
   };
 
-  // Función para obtener color de card basado en RSSI con tema Shrine
-  const getCardColor = (rssi, theme) => {
+  // Función para obtener color de card basado en estado y RSSI
+  const getCardColor = (rssi) => {
     const getSignalColor = (rssi) => {
       if (rssi >= -30) return '#4CAF50'; // Success green
       if (rssi >= -40) return '#FF9800'; // Warning orange
@@ -50,15 +50,27 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layou
 
     const signalColor = getSignalColor(rssi);
     const primaryColor = darkMode ? '#FFCDD2' : '#E91E63';
+    const alertColor = darkMode ? '#FF5722' : '#F44336';
     
-    if (hasAlert) {
+    if (isAlerting) {
+      // Tag está alertando activamente (desaparecido)
+      return {
+        background: darkMode ? '#2D1518' : '#FFFFFF',
+        border: `3px solid ${alertColor}`,
+        boxShadow: `0 0 20px ${alertColor}30`,
+        animation: 'pulse 2s infinite',
+      };
+    } else if (hasAlert) {
+      // Tag marcado para vigilancia pero presente
       return {
         background: darkMode ? '#2D1518' : '#FFFFFF',
         border: `2px solid ${primaryColor}`,
-        boxShadow: `0 0 16px ${primaryColor}20`,
+        borderLeft: `4px solid ${signalColor}`,
+        boxShadow: `0 0 12px ${primaryColor}15`,
       };
     }
     
+    // Tag normal
     return {
       background: darkMode ? '#2D1518' : '#FFFFFF',
       border: `1px solid ${signalColor}40`,
@@ -96,83 +108,99 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layou
 
   const textContent = hexToText(tag.idHex);
 
-  // Layout de lista para móvil
+  // Layout de lista para móvil - optimizado y minimalista
   if (layout === 'list') {
     return (
       <Card 
         sx={{ 
           width: '100%',
-          borderRadius: 2,
+          borderRadius: 1,
           transition: 'all 0.2s ease',
           ...getCardColor(tag.peakRssi)
         }}
       >
-        <CardContent sx={{ py: 2, '&:last-child': { pb: 2 } }}>
+        <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Box display="flex" alignItems="center" gap={1.5} flex={1}>
-              <NfcIcon sx={{ fontSize: 24, color: 'primary.main' }} />
-              {getSignalIcon(tag.peakRssi)}
+            {/* Contenido principal - sin iconos innecesarios */}
+            <Box flex={1} minWidth={0} mr={1}>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  fontFamily: '"Roboto Mono", "Courier New", monospace',
+                  fontSize: '0.85rem',
+                  color: 'text.primary',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  fontWeight: 500,
+                  mb: 0.5
+                }}
+              >
+                {formatHexId(tag.idHex)}
+              </Typography>
               
-              <Box flex={1} minWidth={0}>
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
-                    fontFamily: '"Roboto Mono", "Courier New", monospace',
-                    fontSize: '0.8rem',
-                    color: 'text.primary',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    fontWeight: 500
-                  }}
-                >
-                  {formatHexId(tag.idHex)}
-                </Typography>
+              {/* Línea secundaria con info compacta */}
+              <Box display="flex" alignItems="center" gap={1}>
                 {textContent && (
-                  <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 500 }}>
+                  <Typography variant="caption" sx={{ 
+                    color: 'primary.main', 
+                    fontWeight: 500,
+                    fontSize: '0.7rem'
+                  }}>
                     {textContent}
                   </Typography>
                 )}
+                
+                {/* Indicador de señal compacto - solo color */}
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    backgroundColor: tag.peakRssi >= -40 ? '#4CAF50' : 
+                                   tag.peakRssi >= -50 ? '#FF9800' : '#F44336',
+                  }}
+                />
+                
+                <Typography variant="caption" sx={{ 
+                  color: 'text.secondary',
+                  fontSize: '0.7rem'
+                }}>
+                  {tag.peakRssi} dBm
+                </Typography>
               </Box>
             </Box>
 
-            <Box display="flex" alignItems="center" gap={1}>
-              <Chip 
-                label={`${tag.peakRssi} dBm`}
-                size="small"
-                variant="outlined"
-                sx={{
-                  backgroundColor: tag.peakRssi >= -40 ? 'rgba(76, 175, 80, 0.1)' : 
-                                  tag.peakRssi >= -50 ? 'rgba(255, 152, 0, 0.1)' : 'rgba(244, 67, 54, 0.1)',
-                  color: tag.peakRssi >= -40 ? '#4CAF50' : 
-                         tag.peakRssi >= -50 ? '#FF9800' : '#F44336',
-                  borderColor: tag.peakRssi >= -40 ? '#4CAF50' : 
-                               tag.peakRssi >= -50 ? '#FF9800' : '#F44336',
-                  fontSize: '0.75rem',
-                  fontWeight: 500
-                }}
-              />
-              
-              <IconButton
-                onClick={hasAlert ? onRemoveAlert : onAddAlert}
-                size="small"
-                sx={{
-                  width: 32,
-                  height: 32,
-                  backgroundColor: hasAlert ? 'rgba(233, 30, 99, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                  border: hasAlert ? '1px solid rgba(233, 30, 99, 0.3)' : '1px solid rgba(0, 0, 0, 0.1)',
-                  '&:hover': {
-                    backgroundColor: hasAlert ? 'rgba(233, 30, 99, 0.15)' : 'rgba(0, 0, 0, 0.08)',
-                  },
-                }}
-              >
-                {hasAlert ? (
-                  <NotificationsActiveIcon sx={{ fontSize: 18, color: 'primary.main' }} />
-                ) : (
-                  <NotificationsOffIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
-                )}
-              </IconButton>
-            </Box>
+            {/* Solo botón de alerta - más compacto */}
+            <IconButton
+              onClick={hasAlert ? onRemoveAlert : onAddAlert}
+              size="small"
+              sx={{
+                width: 36,
+                height: 36,
+                backgroundColor: hasAlert 
+                  ? (isAlerting ? 'rgba(244, 67, 54, 0.15)' : 'rgba(233, 30, 99, 0.1)')
+                  : 'rgba(0, 0, 0, 0.05)',
+                border: hasAlert 
+                  ? (isAlerting ? '1px solid rgba(244, 67, 54, 0.4)' : '1px solid rgba(233, 30, 99, 0.3)')
+                  : '1px solid rgba(0, 0, 0, 0.1)',
+                '&:hover': {
+                  backgroundColor: hasAlert 
+                    ? (isAlerting ? 'rgba(244, 67, 54, 0.2)' : 'rgba(233, 30, 99, 0.15)')
+                    : 'rgba(0, 0, 0, 0.08)',
+                },
+              }}
+            >
+              {hasAlert ? (
+                <NotificationsActiveIcon sx={{ 
+                  fontSize: 20, 
+                  color: isAlerting ? 'error.main' : 'primary.main',
+                  animation: isAlerting ? 'pulse 1.5s infinite' : 'none'
+                }} />
+              ) : (
+                <NotificationsOffIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
+              )}
+            </IconButton>
           </Box>
         </CardContent>
       </Card>
@@ -200,7 +228,7 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layou
     >
       <CardContent sx={{ position: 'relative', pb: 2 }}>
         {/* Alert Button */}
-        <Tooltip title={hasAlert ? "Remover alerta" : "Añadir alerta de desaparición"}>
+        <Tooltip title={hasAlert ? `${isAlerting ? 'Alertando - ' : ''}Remover alerta` : "Añadir alerta de desaparición"}>
           <IconButton
             onClick={hasAlert ? onRemoveAlert : onAddAlert}
             sx={{
@@ -210,20 +238,24 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layou
               width: 40,
               height: 40,
               backgroundColor: hasAlert 
-                ? 'rgba(233, 30, 99, 0.1)' 
+                ? (isAlerting ? 'rgba(244, 67, 54, 0.15)' : 'rgba(233, 30, 99, 0.1)')
                 : 'rgba(0, 0, 0, 0.05)',
               border: hasAlert 
-                ? '1px solid rgba(233, 30, 99, 0.3)' 
+                ? (isAlerting ? '1px solid rgba(244, 67, 54, 0.4)' : '1px solid rgba(233, 30, 99, 0.3)')
                 : '1px solid rgba(0, 0, 0, 0.1)',
               '&:hover': {
                 backgroundColor: hasAlert 
-                  ? 'rgba(233, 30, 99, 0.15)' 
+                  ? (isAlerting ? 'rgba(244, 67, 54, 0.2)' : 'rgba(233, 30, 99, 0.15)')
                   : 'rgba(0, 0, 0, 0.08)',
               },
             }}
           >
             {hasAlert ? (
-              <NotificationsActiveIcon sx={{ fontSize: 20, color: 'primary.main' }} />
+              <NotificationsActiveIcon sx={{ 
+                fontSize: 20, 
+                color: isAlerting ? 'error.main' : 'primary.main',
+                animation: isAlerting ? 'pulse 1.5s infinite' : 'none'
+              }} />
             ) : (
               <NotificationsOffIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
             )}

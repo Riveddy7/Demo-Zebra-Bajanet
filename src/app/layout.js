@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Shrine Inventory System - RFID Tracking',
+  title: 'IAMET Inventory System - RFID Tracking',
   description: 'Sistema de inventario elegante basado en Material Design con seguimiento RFID en tiempo real',
   manifest: '/manifest.json',
   appleWebApp: {
@@ -49,6 +49,16 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
         <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300;0,400;0,500;0,600;0,700&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet" />
+        
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            @keyframes pulse {
+              0% { opacity: 1; transform: scale(1); }
+              50% { opacity: 0.7; transform: scale(1.05); }
+              100% { opacity: 1; transform: scale(1); }
+            }
+          `
+        }} />
         
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon.ico" />

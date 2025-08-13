@@ -11,7 +11,7 @@ import SignalWifi1BarIcon from '@mui/icons-material/SignalWifi1Bar';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import NotificationsOffIcon from '@mui/icons-material/NotificationsOff';
 
-const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert }) => {
+const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layout = 'card' }) => {
   // Si es un string simple (legacy), usar formato antiguo
   if (typeof tag === 'string') {
     return (
@@ -39,26 +39,30 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert }) => 
     return <SignalWifi1BarIcon sx={{ color: 'red' }} />;
   };
 
-  // Función para obtener color de card basado en RSSI con tema oscuro
+  // Función para obtener color de card basado en RSSI
   const getCardColor = (rssi) => {
-    const baseStyle = {
-      background: 'rgba(28, 28, 30, 0.8)',
-      backdropFilter: 'blur(20px) saturate(180%)',
-      border: '1px solid rgba(255, 255, 255, 0.1)',
+    const getSignalColor = (rssi) => {
+      if (rssi >= -30) return '#30D158';
+      if (rssi >= -40) return '#FF9F0A';
+      if (rssi >= -50) return '#FFCC02';
+      return '#FF3B30';
     };
+
+    const signalColor = getSignalColor(rssi);
     
     if (hasAlert) {
       return {
-        ...baseStyle,
-        border: '2px solid #FF9F0A',
-        boxShadow: '0 0 20px rgba(255, 159, 10, 0.3)',
+        background: '#FFFFFF',
+        border: `3px solid ${signalColor}`,
+        boxShadow: `0 0 20px ${signalColor}30`,
       };
     }
     
-    if (rssi >= -30) return { ...baseStyle, borderLeft: '4px solid #30D158' };
-    if (rssi >= -40) return { ...baseStyle, borderLeft: '4px solid #FF9F0A' };
-    if (rssi >= -50) return { ...baseStyle, borderLeft: '4px solid #FFCC02' };
-    return { ...baseStyle, borderLeft: '4px solid #FF3B30' };
+    return {
+      background: '#FFFFFF',
+      border: `3px solid ${signalColor}`,
+      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+    };
   };
 
   // Función para formatear el hex ID de forma más legible
@@ -87,6 +91,81 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert }) => 
 
   const textContent = hexToText(tag.idHex);
 
+  // Layout de lista para móvil
+  if (layout === 'list') {
+    return (
+      <Card 
+        sx={{ 
+          width: '100%',
+          borderRadius: 2,
+          transition: 'all 0.2s ease',
+          ...getCardColor(tag.peakRssi)
+        }}
+      >
+        <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Box display="flex" alignItems="center" gap={1} flex={1}>
+              <NfcIcon sx={{ fontSize: 24, color: '#007AFF' }} />
+              {getSignalIcon(tag.peakRssi)}
+              
+              <Box flex={1} minWidth={0}>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Mono", Monaco, monospace',
+                    fontSize: '0.75rem',
+                    color: '#1D1D1F',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {formatHexId(tag.idHex)}
+                </Typography>
+                {textContent && (
+                  <Typography variant="caption" sx={{ color: '#007AFF' }}>
+                    {textContent}
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+
+            <Box display="flex" alignItems="center" gap={1}>
+              <Chip 
+                label={`${tag.peakRssi} dBm`}
+                size="small"
+                sx={{
+                  backgroundColor: tag.peakRssi >= -40 ? 'rgba(48, 209, 88, 0.1)' : 
+                                  tag.peakRssi >= -50 ? 'rgba(255, 159, 10, 0.1)' : 'rgba(255, 59, 48, 0.1)',
+                  color: tag.peakRssi >= -40 ? '#30D158' : 
+                         tag.peakRssi >= -50 ? '#FF9F0A' : '#FF3B30',
+                  fontSize: '0.7rem'
+                }}
+              />
+              
+              <IconButton
+                onClick={hasAlert ? onRemoveAlert : onAddAlert}
+                size="small"
+                sx={{
+                  width: 28,
+                  height: 28,
+                  background: hasAlert ? 'rgba(255, 159, 10, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                }}
+              >
+                {hasAlert ? (
+                  <NotificationsActiveIcon sx={{ fontSize: 16, color: '#FF9F0A' }} />
+                ) : (
+                  <NotificationsOffIcon sx={{ fontSize: 16, color: 'rgba(0, 0, 0, 0.4)' }} />
+                )}
+              </IconButton>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Layout de tarjeta para desktop
   return (
     <Card 
       sx={{ 
@@ -115,23 +194,22 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert }) => 
               width: 36,
               height: 36,
               background: hasAlert 
-                ? 'rgba(255, 159, 10, 0.2)' 
-                : 'rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(10px)',
+                ? 'rgba(255, 159, 10, 0.1)' 
+                : 'rgba(0, 0, 0, 0.05)',
               border: hasAlert 
-                ? '1px solid rgba(255, 159, 10, 0.3)' 
-                : '1px solid rgba(255, 255, 255, 0.2)',
+                ? '1px solid rgba(255, 159, 10, 0.2)' 
+                : '1px solid rgba(0, 0, 0, 0.1)',
               '&:hover': {
                 background: hasAlert 
-                  ? 'rgba(255, 159, 10, 0.3)' 
-                  : 'rgba(255, 255, 255, 0.2)',
+                  ? 'rgba(255, 159, 10, 0.2)' 
+                  : 'rgba(0, 0, 0, 0.08)',
               },
             }}
           >
             {hasAlert ? (
               <NotificationsActiveIcon sx={{ fontSize: 20, color: '#FF9F0A' }} />
             ) : (
-              <NotificationsOffIcon sx={{ fontSize: 20, color: 'rgba(255, 255, 255, 0.6)' }} />
+              <NotificationsOffIcon sx={{ fontSize: 20, color: 'rgba(0, 0, 0, 0.4)' }} />
             )}
           </IconButton>
         </Tooltip>
@@ -153,12 +231,12 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert }) => 
               fontFamily: '-apple-system, BlinkMacSystemFont, "SF Mono", Monaco, monospace', 
               fontSize: '0.8rem',
               wordBreak: 'break-all',
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-              color: 'rgba(255, 255, 255, 0.9)',
+              backgroundColor: 'rgba(0, 0, 0, 0.05)',
+              color: '#1D1D1F',
               padding: '6px 10px',
               borderRadius: 2,
               width: '100%',
-              border: '1px solid rgba(255, 255, 255, 0.1)'
+              border: '1px solid rgba(0, 0, 0, 0.1)'
             }}
           >
             {formatHexId(tag.idHex)}
@@ -171,9 +249,9 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert }) => 
               sx={{ 
                 fontSize: '0.7rem', 
                 maxWidth: '100%',
-                backgroundColor: 'rgba(0, 122, 255, 0.2)',
-                color: '#5AC8FA',
-                border: '1px solid rgba(90, 200, 250, 0.3)'
+                backgroundColor: 'rgba(0, 122, 255, 0.1)',
+                color: '#007AFF',
+                border: '1px solid rgba(0, 122, 255, 0.2)'
               }}
               variant="outlined"
             />
@@ -184,12 +262,12 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert }) => 
               label={`${tag.peakRssi} dBm`}
               size="small"
               sx={{
-                backgroundColor: tag.peakRssi >= -40 ? 'rgba(48, 209, 88, 0.2)' : 
-                                tag.peakRssi >= -50 ? 'rgba(255, 159, 10, 0.2)' : 'rgba(255, 59, 48, 0.2)',
+                backgroundColor: tag.peakRssi >= -40 ? 'rgba(48, 209, 88, 0.1)' : 
+                                tag.peakRssi >= -50 ? 'rgba(255, 159, 10, 0.1)' : 'rgba(255, 59, 48, 0.1)',
                 color: tag.peakRssi >= -40 ? '#30D158' : 
                        tag.peakRssi >= -50 ? '#FF9F0A' : '#FF3B30',
-                border: tag.peakRssi >= -40 ? '1px solid rgba(48, 209, 88, 0.3)' : 
-                        tag.peakRssi >= -50 ? '1px solid rgba(255, 159, 10, 0.3)' : '1px solid rgba(255, 59, 48, 0.3)',
+                border: tag.peakRssi >= -40 ? '1px solid rgba(48, 209, 88, 0.2)' : 
+                        tag.peakRssi >= -50 ? '1px solid rgba(255, 159, 10, 0.2)' : '1px solid rgba(255, 59, 48, 0.2)',
               }}
             />
             {tag.eventNum && (
@@ -198,16 +276,16 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert }) => 
                 size="small"
                 variant="outlined"
                 sx={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)'
+                  backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                  color: 'rgba(0, 0, 0, 0.6)',
+                  border: '1px solid rgba(0, 0, 0, 0.1)'
                 }}
               />
             )}
           </Box>
 
           {tag.timestamp && (
-            <Typography sx={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.5)' }}>
+            <Typography sx={{ fontSize: '0.65rem', color: 'rgba(0, 0, 0, 0.4)' }}>
               {new Date(tag.timestamp).toLocaleTimeString('es-ES')}
             </Typography>
           )}

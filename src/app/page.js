@@ -38,19 +38,47 @@ const theme = createTheme({
 });
 
 export default function Home() {
-  const [inventory, setInventory] = useState([]);
+  const [antennaData, setAntennaData] = useState([]);
   const [error, setError] = useState('');
+  const [lastUpdate, setLastUpdate] = useState(null);
 
   useEffect(() => {
     const fetchInventory = async () => {
       try {
-        const response = await fetch('/api/inventory', { cache: 'no-store' });
+        // Intentar desde endpoint RFID (memoria) primero
+        let response = await fetch('/api/rfid', { cache: 'no-store' });
+        if (!response.ok) {
+          // Fallback al endpoint inventory (Firebase)
+          response = await fetch('/api/inventory', { cache: 'no-store' });
+        }
+        
         if (!response.ok) {
           throw new Error('Error al obtener los datos del inventario');
         }
+        
         const data = await response.json();
-        // Ordenar los tags para una visualización estable
-        setInventory(data.tags ? data.tags.sort() : []);
+        
+        if (data.antennas) {
+          // Datos nuevos organizados por antena
+          setAntennaData(data.antennas);
+          setLastUpdate(data.timestamp);
+        } else if (data.tags) {
+          // Datos legacy - convertir al nuevo formato
+          setAntennaData([{
+            antenna: 1,
+            tags: data.tags.map(tag => ({
+              idHex: tag.epc || tag.idHex || tag,
+              antenna: 1,
+              peakRssi: tag.rssi || 0
+            }))
+          }]);
+          setLastUpdate(data.timestamp);
+        } else {
+          // Sin datos
+          setAntennaData([]);
+        }
+        
+        setError('');
       } catch (err) {
         setError(err.message);
         console.error(err);
@@ -60,8 +88,8 @@ export default function Home() {
     // Carga inicial
     fetchInventory();
 
-    // Polling cada 10 segundos
-    const intervalId = setInterval(fetchInventory, 10000);
+    // Polling cada 5 segundos (más frecuente para detectar cuando algo deja de leerse)
+    const intervalId = setInterval(fetchInventory, 5000);
 
     // Limpieza al desmontar el componente
     return () => clearInterval(intervalId);
@@ -98,7 +126,12 @@ export default function Home() {
         </AppBar>
         <Container component="main" sx={{ mt: 4, mb: 4 }}>
           {error && <Typography color="error">Error: {error}</Typography>}
-          <InventoryDisplay items={inventory} />
+          {lastUpdate && (
+            <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+              Última actualización: {new Date(lastUpdate).toLocaleString('es-ES')}
+            </Typography>
+          )}
+          <InventoryDisplay antennaData={antennaData} />
         </Container>
       </Box>
     </ThemeProvider>

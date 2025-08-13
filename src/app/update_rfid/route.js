@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebaseAdmin';
 
+export const dynamic = 'force-dynamic'; // Asegura que la ruta sea dinámica
+
 // GET method para mostrar interfaz visual de debug
 export async function GET() {
   try {

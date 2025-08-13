@@ -51,16 +51,32 @@ export default function RootLayout({ children }) {
         
         <script dangerouslySetInnerHTML={{
           __html: `
-            if ('serviceWorker' in navigator) {
-              window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/sw.js')
-                  .then(function(registration) {
-                    console.log('SW registered: ', registration);
-                  })
-                  .catch(function(registrationError) {
-                    console.log('SW registration failed: ', registrationError);
-                  });
-              });
+            // Polyfills para Safari iOS
+            if (typeof window !== 'undefined') {
+              // Polyfill básico para Array.find
+              if (!Array.prototype.find) {
+                Array.prototype.find = function(predicate) {
+                  for (var i = 0; i < this.length; i++) {
+                    if (predicate(this[i], i, this)) {
+                      return this[i];
+                    }
+                  }
+                  return undefined;
+                };
+              }
+              
+              // Service Worker registration con manejo de errores
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                      console.log('SW registered: ', registration);
+                    })
+                    .catch(function(registrationError) {
+                      console.log('SW registration failed: ', registrationError);
+                    });
+                });
+              }
             }
           `
         }} />

@@ -68,8 +68,9 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layou
   // Función para formatear el hex ID de forma más legible
   const formatHexId = (hexId) => {
     if (!hexId) return 'N/A';
-    // Dividir en grupos de 4 caracteres
-    return hexId.match(/.{1,4}/g)?.join(' ') || hexId;
+    // Dividir en grupos de 4 caracteres (compatible con Safari)
+    const groups = hexId.match(/.{1,4}/g);
+    return groups ? groups.join(' ') : hexId;
   };
 
   // Convertir hex a texto si es posible
@@ -84,7 +85,7 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layou
         }
       }
       return result.length > 2 ? result : null;
-    } catch {
+    } catch (error) {
       return null;
     }
   };

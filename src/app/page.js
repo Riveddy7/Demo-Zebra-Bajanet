@@ -149,12 +149,16 @@ export default function Home() {
         };
         setNotifications(prev => [...prev, notification]);
         
-        // Solicitar permiso para notificaciones del navegador
-        if (Notification.permission === 'granted') {
-          new Notification('IAMET RFID Alert', {
-            body: notification.message,
-            icon: '/favicon.ico'
-          });
+        // Verificar si las notificaciones están disponibles antes de usarlas
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+          try {
+            new Notification('IAMET RFID Alert', {
+              body: notification.message,
+              icon: '/favicon.ico'
+            });
+          } catch (error) {
+            console.log('Notification not supported:', error);
+          }
         }
       }
     });
@@ -237,9 +241,17 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // Solicitar permisos de notificación
-    if (Notification.permission === 'default') {
-      Notification.requestPermission();
+    // Solicitar permisos de notificación solo si están disponibles
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      try {
+        if (Notification.permission === 'default') {
+          Notification.requestPermission().catch(error => {
+            console.log('Notification permission request failed:', error);
+          });
+        }
+      } catch (error) {
+        console.log('Notifications not supported:', error);
+      }
     }
     
     startScanning();

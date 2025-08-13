@@ -119,20 +119,43 @@ export async function POST(request) {
 }
 
 export async function GET() {
+  console.log('GET /api/rfid called');
+  console.log('lastScanTimestamp:', lastScanTimestamp);
+  console.log('inventoryByAntenna keys:', Object.keys(inventoryByAntenna));
+  
   if (!lastScanTimestamp) {
     return NextResponse.json({ message: 'No data received yet' });
   }
   
-  return NextResponse.json({
-    antennas: Object.keys(inventoryByAntenna).map(antenna => ({
-      antenna: parseInt(antenna),
-      tags: inventoryByAntenna[antenna] instanceof Map ? 
-        Array.from(inventoryByAntenna[antenna].values()) : 
-        inventoryByAntenna[antenna] || []
-    })),
-    timestamp: lastScanTimestamp,
-    totalTags: Object.values(inventoryByAntenna).reduce((sum, tags) => {
-      return sum + (tags instanceof Map ? tags.size : (Array.isArray(tags) ? tags.length : 0));
-    }, 0)
+  // Procesar datos de antenas
+  const processedAntennas = [];
+  
+  Object.keys(inventoryByAntenna).forEach(antennaKey => {
+    const antennaNum = parseInt(antennaKey);
+    const antennaData = inventoryByAntenna[antennaKey];
+    
+    let tags = [];
+    if (antennaData instanceof Map) {
+      tags = Array.from(antennaData.values());
+    } else if (Array.isArray(antennaData)) {
+      tags = antennaData;
+    }
+    
+    if (tags.length > 0) {
+      processedAntennas.push({
+        antenna: antennaNum,
+        tags: tags
+      });
+    }
   });
+  
+  const responseData = {
+    antennas: processedAntennas,
+    timestamp: lastScanTimestamp,
+    totalTags: processedAntennas.reduce((sum, antenna) => sum + antenna.tags.length, 0)
+  };
+  
+  console.log('GET response:', JSON.stringify(responseData, null, 2));
+  
+  return NextResponse.json(responseData);
 }

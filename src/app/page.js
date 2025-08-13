@@ -45,51 +45,43 @@ export default function Home() {
   useEffect(() => {
     const fetchInventory = async () => {
       try {
-        // Intentar desde endpoint RFID (memoria) primero
-        let response = await fetch('/api/rfid', { cache: 'no-store' });
-        if (!response.ok) {
-          // Fallback al endpoint inventory (Firebase)
-          response = await fetch('/api/inventory', { cache: 'no-store' });
-        }
+        // Solo usar endpoint RFID (memoria temporal)
+        const response = await fetch('/api/rfid', { cache: 'no-store' });
         
         if (!response.ok) {
-          throw new Error('Error al obtener los datos del inventario');
+          throw new Error('Error al conectar con el servidor');
         }
         
         const data = await response.json();
+        console.log('Dashboard received data:', data);
         
-        if (data.antennas) {
-          // Datos nuevos organizados por antena
+        if (data.antennas && Array.isArray(data.antennas)) {
+          // Datos organizados por antena
           setAntennaData(data.antennas);
           setLastUpdate(data.timestamp);
-        } else if (data.tags) {
-          // Datos legacy - convertir al nuevo formato
-          setAntennaData([{
-            antenna: 1,
-            tags: data.tags.map(tag => ({
-              idHex: tag.epc || tag.idHex || tag,
-              antenna: 1,
-              peakRssi: tag.rssi || 0
-            }))
-          }]);
-          setLastUpdate(data.timestamp);
+        } else if (data.message) {
+          // Sin datos aún
+          setAntennaData([]);
+          setLastUpdate(null);
         } else {
-          // Sin datos
+          // Datos en formato inesperado
+          console.log('Unexpected data format:', data);
           setAntennaData([]);
         }
         
         setError('');
       } catch (err) {
-        setError(err.message);
-        console.error(err);
+        setError(`Error de conexión: ${err.message}`);
+        console.error('Dashboard fetch error:', err);
+        setAntennaData([]);
       }
     };
 
     // Carga inicial
     fetchInventory();
 
-    // Polling cada 5 segundos (más frecuente para detectar cuando algo deja de leerse)
-    const intervalId = setInterval(fetchInventory, 5000);
+    // Polling cada 3 segundos para detectar rápidamente cuando algo deja de leerse
+    const intervalId = setInterval(fetchInventory, 3000);
 
     // Limpieza al desmontar el componente
     return () => clearInterval(intervalId);

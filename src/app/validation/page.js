@@ -103,8 +103,8 @@ export default function ValidationPage() {
               color={loading ? "default" : "success"} 
             />
             <Chip 
-              label={`Total Tags: ${latestData?.tags?.length || 0}`} 
-              color="primary" 
+              label={`Datos recibidos: ${latestData ? 'Sí' : 'No'}`} 
+              color={latestData ? "success" : "default"} 
             />
             <Chip 
               label={`Última actualización: ${lastUpdated ? lastUpdated.toLocaleTimeString('es-ES') : 'N/A'}`} 
@@ -127,45 +127,77 @@ export default function ValidationPage() {
           
           {loading ? (
             <Typography>Cargando datos...</Typography>
-          ) : latestData?.tags?.length > 0 ? (
-            <TableContainer component={Paper} elevation={0}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell><strong>EPC</strong></TableCell>
-                    <TableCell><strong>TID</strong></TableCell>
-                    <TableCell><strong>RSSI</strong></TableCell>
-                    <TableCell><strong>PC</strong></TableCell>
-                    <TableCell><strong>Antenna</strong></TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {latestData.tags.map((tag, index) => (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <code style={{ backgroundColor: '#f5f5f5', padding: '4px 8px', borderRadius: '4px' }}>
-                          {tag.epc || 'N/A'}
-                        </code>
-                      </TableCell>
-                      <TableCell>
-                        <code style={{ backgroundColor: '#f5f5f5', padding: '4px 8px', borderRadius: '4px' }}>
-                          {tag.tid || 'N/A'}
-                        </code>
-                      </TableCell>
-                      <TableCell>
-                        <Chip 
-                          label={tag.rssi || 'N/A'} 
-                          size="small" 
-                          color={tag.rssi && tag.rssi > -50 ? 'success' : 'warning'} 
-                        />
-                      </TableCell>
-                      <TableCell>{tag.pc || 'N/A'}</TableCell>
-                      <TableCell>{tag.antenna || 'N/A'}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+          ) : latestData ? (
+            <Box>
+              <Alert severity="success" sx={{ mb: 2 }}>
+                ¡Datos recibidos! Analizando formato...
+              </Alert>
+              
+              <Typography variant="h6" gutterBottom>
+                Información de Recepción:
+              </Typography>
+              <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
+                <Chip label={`Tipo: ${latestData.dataType || 'N/A'}`} color="primary" />
+                <Chip label={`Content-Type: ${latestData.contentType || 'N/A'}`} color="secondary" />
+                {latestData.status && (
+                  <Chip label={`Status: ${latestData.status}`} color="error" />
+                )}
+              </Box>
+              
+              <Typography variant="h6" gutterBottom>
+                Datos Sin Procesar:
+              </Typography>
+              <Paper elevation={0} sx={{ p: 2, backgroundColor: '#f5f5f5', maxHeight: 400, overflow: 'auto' }}>
+                <pre style={{ margin: 0, fontSize: '12px', wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}>
+                  {latestData.error ? 
+                    `ERROR: ${latestData.error}` : 
+                    JSON.stringify(latestData.rawData, null, 2)
+                  }
+                </pre>
+              </Paper>
+              
+              {latestData.rawData && typeof latestData.rawData === 'object' && (
+                <Box mt={2}>
+                  <Typography variant="h6" gutterBottom>
+                    Análisis Automático:
+                  </Typography>
+                  <TableContainer component={Paper} elevation={0}>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell><strong>Campo</strong></TableCell>
+                          <TableCell><strong>Valor</strong></TableCell>
+                          <TableCell><strong>Tipo</strong></TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {Object.entries(latestData.rawData).map(([key, value], index) => (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <code style={{ backgroundColor: '#e3f2fd', padding: '2px 6px', borderRadius: '3px' }}>
+                                {key}
+                              </code>
+                            </TableCell>
+                            <TableCell>
+                              <code style={{ backgroundColor: '#f5f5f5', padding: '2px 6px', borderRadius: '3px', maxWidth: 300, display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                              </code>
+                            </TableCell>
+                            <TableCell>
+                              <Chip 
+                                label={typeof value} 
+                                size="small" 
+                                color={typeof value === 'object' ? 'primary' : 'default'} 
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+              )}
+            </Box>
           ) : (
             <Alert severity="info">
               No se han recibido datos RFID aún. Envía datos al endpoint POST para verlos aquí.

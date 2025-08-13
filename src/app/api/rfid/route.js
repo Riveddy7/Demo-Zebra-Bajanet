@@ -4,25 +4,56 @@ import { db } from '@/lib/firebaseAdmin';
 
 export async function POST(request) {
   try {
-    const body = await request.json();
-    const { tags } = body;
-
-    // Valida que los tags sean un array
-    if (!Array.isArray(tags)) {
-      return NextResponse.json({ error: 'Invalid data format: tags must be an array.' }, { status: 400 });
+    // Intentar obtener el cuerpo como JSON, texto o lo que sea
+    let rawData;
+    let contentType = request.headers.get('content-type') || '';
+    
+    if (contentType.includes('application/json')) {
+      rawData = await request.json();
+    } else {
+      rawData = await request.text();
     }
 
-    // Guarda/sobrescribe el último escaneo en Firestore
+    console.log('=== RFID Data Received ===');
+    console.log('Content-Type:', contentType);
+    console.log('Raw Data:', JSON.stringify(rawData, null, 2));
+    console.log('========================');
+
+    // Guardar los datos tal como llegan para análisis
     const docRef = db.collection('inventory').doc('latest-scan');
     await docRef.set({
-      tags: tags,
+      rawData: rawData,
+      contentType: contentType,
       timestamp: new Date().toISOString(),
+      dataType: typeof rawData,
     });
 
-    return NextResponse.json({ success: true, message: `Inventory updated with ${tags.length} tags.` });
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Data received and stored for analysis',
+      receivedType: typeof rawData,
+      contentType: contentType
+    });
 
   } catch (error) {
     console.error('Error in RFID endpoint:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    
+    // Intentar guardar incluso el error para diagnóstico
+    try {
+      const docRef = db.collection('inventory').doc('latest-scan');
+      await docRef.set({
+        error: error.message,
+        timestamp: new Date().toISOString(),
+        status: 'error'
+      });
+    } catch (dbError) {
+      console.error('Failed to save error to database:', dbError);
+    }
+
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Data received but failed to process', 
+      details: error.message 
+    }, { status: 200 }); // Devolver 200 para no rechazar el cliente
   }
 }

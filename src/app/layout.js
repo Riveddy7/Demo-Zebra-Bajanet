@@ -1,11 +1,11 @@
 export const metadata = {
-  title: 'IAMET Real Time Tracker - RFID',
-  description: 'Sistema de monitoreo RFID en tiempo real para inventario y seguimiento de activos',
+  title: 'Shrine Inventory System - RFID Tracking',
+  description: 'Sistema de inventario elegante basado en Material Design con seguimiento RFID en tiempo real',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'IAMET RFID',
+    title: 'Shrine RFID',
   },
   formatDetection: {
     telephone: false,
@@ -29,7 +29,7 @@ export function generateViewport() {
     maximumScale: 1,
     userScalable: false,
     viewportFit: 'cover',
-    themeColor: '#007AFF',
+    themeColor: '#E91E63',
   }
 }
 
@@ -37,13 +37,18 @@ export default function RootLayout({ children }) {
   return (
     <html lang="es">
       <head>
-        <meta name="theme-color" content="#007AFF" />
+        <meta name="theme-color" content="#E91E63" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="IAMET RFID" />
-        <meta name="application-name" content="IAMET RFID" />
-        <meta name="msapplication-TileColor" content="#007AFF" />
+        <meta name="apple-mobile-web-app-title" content="Shrine RFID" />
+        <meta name="application-name" content="Shrine RFID" />
+        <meta name="msapplication-TileColor" content="#E91E63" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
+        
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
+        <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300;0,400;0,500;0,600;0,700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet" />
         
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon.ico" />

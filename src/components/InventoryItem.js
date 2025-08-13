@@ -11,7 +11,7 @@ import SignalWifi1BarIcon from '@mui/icons-material/SignalWifi1Bar';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import NotificationsOffIcon from '@mui/icons-material/NotificationsOff';
 
-const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layout = 'card' }) => {
+const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layout = 'card', darkMode = false }) => {
   // Si es un string simple (legacy), usar formato antiguo
   if (typeof tag === 'string') {
     return (
@@ -39,29 +39,33 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layou
     return <SignalWifi1BarIcon sx={{ color: 'red' }} />;
   };
 
-  // Función para obtener color de card basado en RSSI
-  const getCardColor = (rssi) => {
+  // Función para obtener color de card basado en RSSI con tema Shrine
+  const getCardColor = (rssi, theme) => {
     const getSignalColor = (rssi) => {
-      if (rssi >= -30) return '#30D158';
-      if (rssi >= -40) return '#FF9F0A';
-      if (rssi >= -50) return '#FFCC02';
-      return '#FF3B30';
+      if (rssi >= -30) return '#4CAF50'; // Success green
+      if (rssi >= -40) return '#FF9800'; // Warning orange
+      if (rssi >= -50) return '#FFC107'; // Warning amber
+      return '#F44336'; // Error red
     };
 
     const signalColor = getSignalColor(rssi);
+    const primaryColor = darkMode ? '#FFCDD2' : '#E91E63';
     
     if (hasAlert) {
       return {
-        background: '#FFFFFF',
-        border: `3px solid ${signalColor}`,
-        boxShadow: `0 0 20px ${signalColor}30`,
+        background: darkMode ? '#2D1518' : '#FFFFFF',
+        border: `2px solid ${primaryColor}`,
+        boxShadow: `0 0 16px ${primaryColor}20`,
       };
     }
     
     return {
-      background: '#FFFFFF',
-      border: `3px solid ${signalColor}`,
-      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+      background: darkMode ? '#2D1518' : '#FFFFFF',
+      border: `1px solid ${signalColor}40`,
+      borderLeft: `4px solid ${signalColor}`,
+      boxShadow: darkMode 
+        ? '0 2px 8px rgba(0, 0, 0, 0.3)'
+        : '0 1px 3px rgba(26, 14, 19, 0.12), 0 1px 2px rgba(26, 14, 19, 0.24)',
     };
   };
 
@@ -103,28 +107,29 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layou
           ...getCardColor(tag.peakRssi)
         }}
       >
-        <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+        <CardContent sx={{ py: 2, '&:last-child': { pb: 2 } }}>
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Box display="flex" alignItems="center" gap={1} flex={1}>
-              <NfcIcon sx={{ fontSize: 24, color: '#007AFF' }} />
+            <Box display="flex" alignItems="center" gap={1.5} flex={1}>
+              <NfcIcon sx={{ fontSize: 24, color: 'primary.main' }} />
               {getSignalIcon(tag.peakRssi)}
               
               <Box flex={1} minWidth={0}>
                 <Typography 
                   variant="body2" 
                   sx={{ 
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Mono", Monaco, monospace',
-                    fontSize: '0.75rem',
-                    color: '#1D1D1F',
+                    fontFamily: '"Roboto Mono", "Courier New", monospace',
+                    fontSize: '0.8rem',
+                    color: 'text.primary',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
+                    whiteSpace: 'nowrap',
+                    fontWeight: 500
                   }}
                 >
                   {formatHexId(tag.idHex)}
                 </Typography>
                 {textContent && (
-                  <Typography variant="caption" sx={{ color: '#007AFF' }}>
+                  <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 500 }}>
                     {textContent}
                   </Typography>
                 )}
@@ -135,12 +140,16 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layou
               <Chip 
                 label={`${tag.peakRssi} dBm`}
                 size="small"
+                variant="outlined"
                 sx={{
-                  backgroundColor: tag.peakRssi >= -40 ? 'rgba(48, 209, 88, 0.1)' : 
-                                  tag.peakRssi >= -50 ? 'rgba(255, 159, 10, 0.1)' : 'rgba(255, 59, 48, 0.1)',
-                  color: tag.peakRssi >= -40 ? '#30D158' : 
-                         tag.peakRssi >= -50 ? '#FF9F0A' : '#FF3B30',
-                  fontSize: '0.7rem'
+                  backgroundColor: tag.peakRssi >= -40 ? 'rgba(76, 175, 80, 0.1)' : 
+                                  tag.peakRssi >= -50 ? 'rgba(255, 152, 0, 0.1)' : 'rgba(244, 67, 54, 0.1)',
+                  color: tag.peakRssi >= -40 ? '#4CAF50' : 
+                         tag.peakRssi >= -50 ? '#FF9800' : '#F44336',
+                  borderColor: tag.peakRssi >= -40 ? '#4CAF50' : 
+                               tag.peakRssi >= -50 ? '#FF9800' : '#F44336',
+                  fontSize: '0.75rem',
+                  fontWeight: 500
                 }}
               />
               
@@ -148,15 +157,19 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layou
                 onClick={hasAlert ? onRemoveAlert : onAddAlert}
                 size="small"
                 sx={{
-                  width: 28,
-                  height: 28,
-                  background: hasAlert ? 'rgba(255, 159, 10, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                  width: 32,
+                  height: 32,
+                  backgroundColor: hasAlert ? 'rgba(233, 30, 99, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                  border: hasAlert ? '1px solid rgba(233, 30, 99, 0.3)' : '1px solid rgba(0, 0, 0, 0.1)',
+                  '&:hover': {
+                    backgroundColor: hasAlert ? 'rgba(233, 30, 99, 0.15)' : 'rgba(0, 0, 0, 0.08)',
+                  },
                 }}
               >
                 {hasAlert ? (
-                  <NotificationsActiveIcon sx={{ fontSize: 16, color: '#FF9F0A' }} />
+                  <NotificationsActiveIcon sx={{ fontSize: 18, color: 'primary.main' }} />
                 ) : (
-                  <NotificationsOffIcon sx={{ fontSize: 16, color: 'rgba(0, 0, 0, 0.4)' }} />
+                  <NotificationsOffIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
                 )}
               </IconButton>
             </Box>
@@ -174,11 +187,13 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layou
         maxWidth: 320,
         textAlign: 'center', 
         m: 1, 
-        borderRadius: 3,
-        transition: 'all 0.3s ease',
+        borderRadius: 1,
+        transition: 'all 0.2s ease',
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4)',
+          transform: 'translateY(-2px)',
+          boxShadow: darkMode
+            ? '0 4px 12px rgba(0, 0, 0, 0.4)'
+            : '0 2px 6px rgba(26, 14, 19, 0.15), 0 2px 4px rgba(26, 14, 19, 0.3)',
         },
         ...getCardColor(tag.peakRssi)
       }}
@@ -190,38 +205,38 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layou
             onClick={hasAlert ? onRemoveAlert : onAddAlert}
             sx={{
               position: 'absolute',
-              top: 8,
-              right: 8,
-              width: 36,
-              height: 36,
-              background: hasAlert 
-                ? 'rgba(255, 159, 10, 0.1)' 
+              top: 12,
+              right: 12,
+              width: 40,
+              height: 40,
+              backgroundColor: hasAlert 
+                ? 'rgba(233, 30, 99, 0.1)' 
                 : 'rgba(0, 0, 0, 0.05)',
               border: hasAlert 
-                ? '1px solid rgba(255, 159, 10, 0.2)' 
+                ? '1px solid rgba(233, 30, 99, 0.3)' 
                 : '1px solid rgba(0, 0, 0, 0.1)',
               '&:hover': {
-                background: hasAlert 
-                  ? 'rgba(255, 159, 10, 0.2)' 
+                backgroundColor: hasAlert 
+                  ? 'rgba(233, 30, 99, 0.15)' 
                   : 'rgba(0, 0, 0, 0.08)',
               },
             }}
           >
             {hasAlert ? (
-              <NotificationsActiveIcon sx={{ fontSize: 20, color: '#FF9F0A' }} />
+              <NotificationsActiveIcon sx={{ fontSize: 20, color: 'primary.main' }} />
             ) : (
-              <NotificationsOffIcon sx={{ fontSize: 20, color: 'rgba(0, 0, 0, 0.4)' }} />
+              <NotificationsOffIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
             )}
           </IconButton>
         </Tooltip>
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, pt: 1 }}>
-          <Box display="flex" alignItems="center" gap={1}>
-            <NfcIcon sx={{ fontSize: 40, color: '#007AFF' }} />
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, pt: 1 }}>
+          <Box display="flex" alignItems="center" gap={1.5}>
+            <NfcIcon sx={{ fontSize: 42, color: 'primary.main' }} />
             {getSignalIcon(tag.peakRssi)}
           </Box>
           
-          <Typography sx={{ fontSize: 12 }} color="text.secondary" gutterBottom>
+          <Typography sx={{ fontSize: 14, fontWeight: 500 }} color="text.secondary" gutterBottom>
             Tag RFID
           </Typography>
           
@@ -229,15 +244,17 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layou
             variant="body2" 
             component="div" 
             sx={{ 
-              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Mono", Monaco, monospace', 
-              fontSize: '0.8rem',
+              fontFamily: '"Roboto Mono", "Courier New", monospace', 
+              fontSize: '0.85rem',
               wordBreak: 'break-all',
-              backgroundColor: 'rgba(0, 0, 0, 0.05)',
-              color: '#1D1D1F',
-              padding: '6px 10px',
-              borderRadius: 2,
+              backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+              color: 'text.primary',
+              padding: '8px 12px',
+              borderRadius: 1,
               width: '100%',
-              border: '1px solid rgba(0, 0, 0, 0.1)'
+              border: '1px solid',
+              borderColor: 'divider',
+              fontWeight: 500
             }}
           >
             {formatHexId(tag.idHex)}
@@ -248,27 +265,31 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layou
               label={textContent}
               size="small"
               sx={{ 
-                fontSize: '0.7rem', 
+                fontSize: '0.75rem', 
                 maxWidth: '100%',
-                backgroundColor: 'rgba(0, 122, 255, 0.1)',
-                color: '#007AFF',
-                border: '1px solid rgba(0, 122, 255, 0.2)'
+                backgroundColor: 'rgba(233, 30, 99, 0.1)',
+                color: 'primary.main',
+                border: '1px solid',
+                borderColor: 'primary.main',
+                fontWeight: 500
               }}
               variant="outlined"
             />
           )}
 
-          <Box display="flex" gap={1} flexWrap="wrap" justifyContent="center">
+          <Box display="flex" gap={1.5} flexWrap="wrap" justifyContent="center">
             <Chip 
               label={`${tag.peakRssi} dBm`}
               size="small"
+              variant="outlined"
               sx={{
-                backgroundColor: tag.peakRssi >= -40 ? 'rgba(48, 209, 88, 0.1)' : 
-                                tag.peakRssi >= -50 ? 'rgba(255, 159, 10, 0.1)' : 'rgba(255, 59, 48, 0.1)',
-                color: tag.peakRssi >= -40 ? '#30D158' : 
-                       tag.peakRssi >= -50 ? '#FF9F0A' : '#FF3B30',
-                border: tag.peakRssi >= -40 ? '1px solid rgba(48, 209, 88, 0.2)' : 
-                        tag.peakRssi >= -50 ? '1px solid rgba(255, 159, 10, 0.2)' : '1px solid rgba(255, 59, 48, 0.2)',
+                backgroundColor: tag.peakRssi >= -40 ? 'rgba(76, 175, 80, 0.1)' : 
+                                tag.peakRssi >= -50 ? 'rgba(255, 152, 0, 0.1)' : 'rgba(244, 67, 54, 0.1)',
+                color: tag.peakRssi >= -40 ? '#4CAF50' : 
+                       tag.peakRssi >= -50 ? '#FF9800' : '#F44336',
+                borderColor: tag.peakRssi >= -40 ? '#4CAF50' : 
+                             tag.peakRssi >= -50 ? '#FF9800' : '#F44336',
+                fontWeight: 500
               }}
             />
             {tag.eventNum && (
@@ -277,16 +298,17 @@ const InventoryItem = ({ tag, hasAlert = false, onAddAlert, onRemoveAlert, layou
                 size="small"
                 variant="outlined"
                 sx={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.05)',
-                  color: 'rgba(0, 0, 0, 0.6)',
-                  border: '1px solid rgba(0, 0, 0, 0.1)'
+                  backgroundColor: 'rgba(109, 76, 65, 0.1)',
+                  color: 'secondary.main',
+                  borderColor: 'secondary.main',
+                  fontWeight: 500
                 }}
               />
             )}
           </Box>
 
           {tag.timestamp && (
-            <Typography sx={{ fontSize: '0.65rem', color: 'rgba(0, 0, 0, 0.4)' }}>
+            <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary', fontWeight: 400 }}>
               {new Date(tag.timestamp).toLocaleTimeString('es-ES')}
             </Typography>
           )}

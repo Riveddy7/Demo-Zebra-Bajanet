@@ -18,91 +18,151 @@ import {
   Switch,
   FormControlLabel,
   Paper,
+  IconButton,
 } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 
-// Tema oscuro con estilo Apple Glass
-const theme = createTheme({
+// Material Design Shrine-inspired theme
+const createShrineTheme = (darkMode) => createTheme({
   palette: {
-    mode: 'light',
+    mode: darkMode ? 'dark' : 'light',
     primary: {
-      main: '#007AFF', // iOS Blue
-      contrastText: '#FFFFFF',
+      main: darkMode ? '#FFCDD2' : '#E91E63', // Shrine Pink
+      light: darkMode ? '#FFECF0' : '#F8BBD9',
+      dark: darkMode ? '#F8BBD9' : '#C2185B',
+      contrastText: darkMode ? '#1A0E13' : '#FFFFFF',
     },
     secondary: {
-      main: '#FF3B30', // iOS Red
+      main: darkMode ? '#D7CCC8' : '#6D4C41', // Shrine Brown
+      light: darkMode ? '#EFEBE9' : '#8D6E63',
+      dark: darkMode ? '#A1887F' : '#5D4037',
+      contrastText: darkMode ? '#1A1717' : '#FFFFFF',
     },
     background: {
-      default: '#F2F2F7', // iOS Light Gray
-      paper: '#FFFFFF',
+      default: darkMode ? '#1A0E13' : '#FFFBFA', // Shrine Cream/Dark
+      paper: darkMode ? '#2D1518' : '#FFFFFF',
+    },
+    surface: {
+      main: darkMode ? '#2D1518' : '#FFFBFA',
     },
     text: {
-      primary: '#1D1D1F',
-      secondary: 'rgba(29, 29, 31, 0.6)',
+      primary: darkMode ? '#FFECF0' : '#1A0E13',
+      secondary: darkMode ? 'rgba(255, 236, 240, 0.7)' : 'rgba(26, 14, 19, 0.6)',
     },
-    divider: 'rgba(0, 0, 0, 0.1)',
+    divider: darkMode ? 'rgba(255, 236, 240, 0.12)' : 'rgba(26, 14, 19, 0.08)',
+    error: {
+      main: '#F44336',
+    },
+    warning: {
+      main: '#FF9800',
+    },
+    success: {
+      main: '#4CAF50',
+    },
   },
   typography: {
-    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif',
+    fontFamily: '"Rubik", "Roboto", "Helvetica", "Arial", sans-serif',
     h3: {
-      fontWeight: 700,
-      fontSize: '2.5rem',
-      letterSpacing: '-0.02em',
+      fontWeight: 500,
+      fontSize: '2.2rem',
+      letterSpacing: '0.02em',
     },
     h4: {
-      fontWeight: 600,
-      letterSpacing: '-0.01em',
+      fontWeight: 500,
+      fontSize: '1.8rem',
+      letterSpacing: '0.01em',
+    },
+    h5: {
+      fontWeight: 500,
+      fontSize: '1.5rem',
     },
     h6: {
-      fontWeight: 600,
+      fontWeight: 500,
+      fontSize: '1.25rem',
     },
     body1: {
       fontSize: '1rem',
+      lineHeight: 1.6,
+      letterSpacing: '0.01em',
+    },
+    body2: {
+      fontSize: '0.875rem',
       lineHeight: 1.5,
+      letterSpacing: '0.01em',
+    },
+    button: {
+      textTransform: 'none',
+      fontWeight: 500,
     },
   },
   shape: {
-    borderRadius: 16,
+    borderRadius: 4,
   },
   components: {
     MuiCard: {
       styleOverrides: {
-        root: {
-          background: '#FFFFFF',
-          border: '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
-        },
+        root: ({ theme }) => ({
+          background: theme.palette.background.paper,
+          border: `1px solid ${theme.palette.divider}`,
+          boxShadow: darkMode 
+            ? '0 2px 8px rgba(0, 0, 0, 0.3)'
+            : '0 1px 3px rgba(26, 14, 19, 0.12), 0 1px 2px rgba(26, 14, 19, 0.24)',
+          transition: 'box-shadow 0.2s ease, transform 0.2s ease',
+          '&:hover': {
+            boxShadow: darkMode
+              ? '0 4px 12px rgba(0, 0, 0, 0.4)'
+              : '0 2px 6px rgba(26, 14, 19, 0.15), 0 2px 4px rgba(26, 14, 19, 0.3)',
+            transform: 'translateY(-1px)',
+          },
+        }),
       },
     },
     MuiAppBar: {
       styleOverrides: {
-        root: {
-          background: 'rgba(255, 255, 255, 0.8)',
+        root: ({ theme }) => ({
+          background: darkMode
+            ? 'rgba(45, 21, 24, 0.95)'
+            : 'rgba(255, 251, 250, 0.95)',
           backdropFilter: 'blur(20px) saturate(180%)',
-          borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: '0 2px 16px rgba(0, 0, 0, 0.1)',
-        },
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          boxShadow: darkMode
+            ? '0 2px 8px rgba(0, 0, 0, 0.3)'
+            : '0 1px 3px rgba(26, 14, 19, 0.12)',
+        }),
       },
     },
     MuiPaper: {
       styleOverrides: {
-        root: {
-          background: '#FFFFFF',
-          border: '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
-        },
+        root: ({ theme }) => ({
+          background: theme.palette.background.paper,
+          border: `1px solid ${theme.palette.divider}`,
+          boxShadow: darkMode
+            ? '0 1px 3px rgba(0, 0, 0, 0.2)'
+            : '0 1px 3px rgba(26, 14, 19, 0.12)',
+        }),
       },
     },
     MuiFab: {
       styleOverrides: {
-        root: {
-          background: '#007AFF',
-          color: 'white',
+        root: ({ theme }) => ({
+          background: theme.palette.primary.main,
+          color: theme.palette.primary.contrastText,
           '&:hover': {
-            background: '#0051D5',
+            background: theme.palette.primary.dark,
+            transform: 'scale(1.05)',
           },
-        },
+        }),
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          borderRadius: 16,
+          fontWeight: 500,
+        }),
       },
     },
   },
@@ -117,9 +177,22 @@ export default function Home() {
   const [alertedTags, setAlertedTags] = useState(new Set());
   const [tagAlerts, setTagAlerts] = useState(new Map());
   const [notifications, setNotifications] = useState([]);
+  const [darkMode, setDarkMode] = useState(false);
+
+  // Cargar preferencia de tema desde localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('shrine-dark-mode');
+      if (savedTheme) {
+        setDarkMode(JSON.parse(savedTheme));
+      }
+    }
+  }, []);
   const intervalRef = useRef(null);
   const tagHistoryRef = useRef(new Map());
   const scanCountRef = useRef(0);
+
+  const theme = createShrineTheme(darkMode);
 
   // Sistema de alertas y notificaciones
   const checkTagAlerts = (currentData) => {
@@ -271,13 +344,22 @@ export default function Home() {
 
   const displayData = isScanning ? antennaData : frozenData;
 
+  const toggleDarkMode = () => {
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('shrine-dark-mode', JSON.stringify(newDarkMode));
+    }
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ 
         minHeight: '100vh',
-        backgroundColor: '#F2F2F7',
-        position: 'relative'
+        backgroundColor: 'background.default',
+        position: 'relative',
+        transition: 'background-color 0.3s ease',
       }}>
         <AppBar position="static" elevation={0}>
           <Toolbar sx={{ 
@@ -290,27 +372,36 @@ export default function Home() {
               <Typography
                 variant={{ xs: 'h5', md: 'h4' }}
                 sx={{
-                  background: 'linear-gradient(45deg, #007AFF 30%, #5AC8FA 90%)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  fontWeight: 700,
-                  letterSpacing: '-0.02em',
+                  color: 'primary.main',
+                  fontWeight: 500,
+                  letterSpacing: '0.02em',
                 }}
               >
-                IAMET
+                SHRINE
               </Typography>
               <Box display={{ xs: 'none', sm: 'block' }}>
-                <Typography variant="h6" sx={{ color: '#1D1D1F', fontWeight: 600 }}>
-                  Real Time Tracker
+                <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: 500 }}>
+                  Inventory System
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'rgba(29, 29, 31, 0.6)', fontSize: '0.75rem' }}>
-                  RFID Monitoring System
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                  RFID Asset Tracking
                 </Typography>
               </Box>
             </Box>
             
-            <Box display="flex" alignItems="center" gap={1}>
+            <Box display="flex" alignItems="center" gap={2}>
+              <IconButton
+                onClick={toggleDarkMode}
+                sx={{ 
+                  color: 'text.primary',
+                  '&:hover': {
+                    backgroundColor: 'rgba(233, 30, 99, 0.08)',
+                  },
+                }}
+              >
+                {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
+              </IconButton>
+              
               <FormControlLabel
                 control={
                   <Switch
@@ -319,10 +410,10 @@ export default function Home() {
                     size="medium"
                     sx={{
                       '& .MuiSwitch-switchBase.Mui-checked': {
-                        color: '#007AFF',
+                        color: 'primary.main',
                       },
                       '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                        backgroundColor: '#007AFF',
+                        backgroundColor: 'primary.main',
                       },
                       '& .MuiSwitch-root': {
                         '@media (max-width: 600px)': {
@@ -334,7 +425,7 @@ export default function Home() {
                 }
                 label={
                   <Typography variant="body2" sx={{ 
-                    color: 'rgba(29, 29, 31, 0.8)',
+                    color: 'text.secondary',
                     fontSize: { xs: '0.75rem', md: '0.875rem' }
                   }}>
                     {isScanning ? 'Activo' : 'Pausado'}
@@ -345,35 +436,39 @@ export default function Home() {
           </Toolbar>
         </AppBar>
 
-        <Container component="main" sx={{ py: 4, px: { xs: 2, md: 4 } }}>
+        <Container component="main" sx={{ py: { xs: 3, md: 5 }, px: { xs: 2, md: 4 } }}>
           {/* Status Bar */}
           <Paper sx={{ 
-            p: { xs: 2, md: 3 }, 
-            mb: 3, 
+            p: { xs: 3, md: 4 }, 
+            mb: 4,
+            background: darkMode 
+              ? 'linear-gradient(135deg, #2D1518 0%, #3D1E22 100%)'
+              : 'linear-gradient(135deg, #FFFFFF 0%, #FFFBFA 100%)',
+            borderRadius: 2,
           }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
-              <Box display="flex" gap={{ xs: 2, md: 3 }} flexWrap="wrap">
+              <Box display="flex" gap={{ xs: 2, md: 4 }} flexWrap="wrap">
                 <Box>
-                  <Typography variant={{ xs: 'h4', md: 'h3' }} sx={{ color: '#007AFF', fontWeight: 700 }}>
+                  <Typography variant={{ xs: 'h4', md: 'h3' }} sx={{ color: 'primary.main', fontWeight: 500 }}>
                     {displayData.reduce((sum, antenna) => sum + (antenna.tags?.length || 0), 0)}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: 'rgba(29, 29, 31, 0.6)' }}>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     Tags Detectados
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant={{ xs: 'h4', md: 'h3' }} sx={{ color: '#30D158', fontWeight: 700 }}>
+                  <Typography variant={{ xs: 'h4', md: 'h3' }} sx={{ color: 'success.main', fontWeight: 500 }}>
                     {displayData.length}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: 'rgba(29, 29, 31, 0.6)' }}>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     Antenas Activas
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant={{ xs: 'h4', md: 'h3' }} sx={{ color: '#FF9F0A', fontWeight: 700 }}>
+                  <Typography variant={{ xs: 'h4', md: 'h3' }} sx={{ color: 'warning.main', fontWeight: 500 }}>
                     {tagAlerts.size}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: 'rgba(29, 29, 31, 0.6)' }}>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     Alertas Activas
                   </Typography>
                 </Box>
@@ -381,7 +476,7 @@ export default function Home() {
               
               {lastUpdate && (
                 <Typography variant="body2" sx={{ 
-                  color: 'rgba(29, 29, 31, 0.5)', 
+                  color: 'text.secondary', 
                   fontSize: { xs: '0.7rem', md: '0.8rem' },
                   display: { xs: 'none', sm: 'block' }
                 }}>
@@ -392,11 +487,7 @@ export default function Home() {
           </Paper>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 3, 
-              background: 'rgba(255, 59, 48, 0.1)',
-              border: '1px solid rgba(255, 59, 48, 0.2)',
-              '& .MuiAlert-message': { color: '#FF3B30' }
-            }}>
+            <Alert severity="error" sx={{ mb: 3 }}>
               {error}
             </Alert>
           )}
@@ -406,23 +497,36 @@ export default function Home() {
             alertedTags={alertedTags}
             onAddAlert={addTagAlert}
             onRemoveAlert={removeTagAlert}
+            darkMode={darkMode}
           />
         </Container>
 
-        {/* Floating Action Button */}
+        {/* Floating Action Button with Shrine styling */}
         <Fab
           color="primary"
           sx={{
             position: 'fixed',
-            bottom: 24,
-            right: 24,
-            width: 64,
-            height: 64,
+            bottom: 32,
+            right: 32,
+            width: 72,
+            height: 72,
             zIndex: 1000,
+            background: darkMode 
+              ? 'linear-gradient(135deg, #FFCDD2 0%, #F8BBD9 100%)'
+              : 'linear-gradient(135deg, #E91E63 0%, #AD1457 100%)',
+            boxShadow: darkMode
+              ? '0 8px 32px rgba(255, 205, 210, 0.3)'
+              : '0 8px 32px rgba(233, 30, 99, 0.3)',
+            '&:hover': {
+              transform: 'scale(1.05) translateY(-2px)',
+              boxShadow: darkMode
+                ? '0 12px 40px rgba(255, 205, 210, 0.4)'
+                : '0 12px 40px rgba(233, 30, 99, 0.4)',
+            },
           }}
           onClick={toggleScanning}
         >
-          {isScanning ? <PauseIcon sx={{ fontSize: 28 }} /> : <PlayArrowIcon sx={{ fontSize: 28 }} />}
+          {isScanning ? <PauseIcon sx={{ fontSize: 32 }} /> : <PlayArrowIcon sx={{ fontSize: 32 }} />}
         </Fab>
 
         {/* Notifications */}
@@ -438,10 +542,10 @@ export default function Home() {
               severity="error" 
               onClose={() => dismissNotification(notification.id)}
               sx={{
-                background: 'rgba(28, 28, 30, 0.95)',
+                background: darkMode ? 'rgba(45, 21, 24, 0.95)' : 'rgba(255, 251, 250, 0.95)',
                 backdropFilter: 'blur(20px) saturate(180%)',
-                border: '1px solid rgba(255, 59, 48, 0.3)',
-                color: '#FF3B30'
+                border: `1px solid ${theme.palette.error.main}30`,
+                color: 'error.main'
               }}
             >
               {notification.message}

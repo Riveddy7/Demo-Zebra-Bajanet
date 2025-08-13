@@ -6,7 +6,6 @@ RUN npm ci
 
 # Stage 2: Build the Next.js application
 COPY . .
-RUN ls -la /app
 RUN npm run build
 
 # Stage 3: Run the Next.js application
@@ -19,7 +18,7 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nextjs
 RUN adduser --system --uid 1001 nextjs
 
-COPY --from=builder /app/public ./public
+COPY public ./public
 COPY --from=builder --chown=nextjs:nextjs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nextjs /app/.next/static ./.next/static
 

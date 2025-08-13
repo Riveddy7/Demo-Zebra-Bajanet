@@ -1,6 +1,8 @@
 
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebaseAdmin';
+
+// Almacenamiento temporal en memoria mientras solucionamos Firebase
+let latestRFIDData = null;
 
 export async function POST(request) {
   try {
@@ -19,36 +21,34 @@ export async function POST(request) {
     console.log('Raw Data:', JSON.stringify(rawData, null, 2));
     console.log('========================');
 
-    // Guardar los datos tal como llegan para análisis
-    const docRef = db.collection('inventory').doc('latest-scan');
-    await docRef.set({
+    // Guardar en memoria temporalmente
+    latestRFIDData = {
       rawData: rawData,
       contentType: contentType,
       timestamp: new Date().toISOString(),
       dataType: typeof rawData,
-    });
+    };
+
+    // Intentar guardar en Firebase pero no fallar si no funciona
+    try {
+      const { db } = await import('@/lib/firebaseAdmin');
+      const docRef = db.collection('inventory').doc('latest-scan');
+      await docRef.set(latestRFIDData);
+      console.log('Data saved to Firebase successfully');
+    } catch (firebaseError) {
+      console.log('Firebase failed, but data saved to memory:', firebaseError.message);
+    }
 
     return NextResponse.json({ 
       success: true, 
       message: 'Data received and stored for analysis',
       receivedType: typeof rawData,
-      contentType: contentType
+      contentType: contentType,
+      storage: latestRFIDData ? 'memory' : 'firebase'
     });
 
   } catch (error) {
     console.error('Error in RFID endpoint:', error);
-    
-    // Intentar guardar incluso el error para diagnóstico
-    try {
-      const docRef = db.collection('inventory').doc('latest-scan');
-      await docRef.set({
-        error: error.message,
-        timestamp: new Date().toISOString(),
-        status: 'error'
-      });
-    } catch (dbError) {
-      console.error('Failed to save error to database:', dbError);
-    }
 
     return NextResponse.json({ 
       success: false, 
@@ -56,4 +56,8 @@ export async function POST(request) {
       details: error.message 
     }, { status: 200 }); // Devolver 200 para no rechazar el cliente
   }
+}
+
+export async function GET() {
+  return NextResponse.json(latestRFIDData || { message: 'No data received yet' });
 }

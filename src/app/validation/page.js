@@ -40,9 +40,14 @@ export default function ValidationPage() {
 
   const fetchLatestData = async () => {
     try {
-      const response = await fetch('/api/inventory');
+      // Primero intentar desde memoria (endpoint rfid)
+      let response = await fetch('/api/rfid');
       if (!response.ok) {
-        throw new Error('Error al obtener datos');
+        // Si falla, intentar desde Firebase (endpoint inventory)
+        response = await fetch('/api/inventory');
+        if (!response.ok) {
+          throw new Error('Error al obtener datos de ambos endpoints');
+        }
       }
       const data = await response.json();
       setLatestData(data);

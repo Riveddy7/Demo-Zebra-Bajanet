@@ -304,13 +304,18 @@ export default function Home() {
                   <Switch
                     checked={isScanning}
                     onChange={toggleScanning}
-                    size={window?.innerWidth < 600 ? 'small' : 'medium'}
+                    size="medium"
                     sx={{
                       '& .MuiSwitch-switchBase.Mui-checked': {
                         color: '#007AFF',
                       },
                       '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
                         backgroundColor: '#007AFF',
+                      },
+                      '& .MuiSwitch-root': {
+                        '@media (max-width: 600px)': {
+                          transform: 'scale(0.8)',
+                        },
                       },
                     }}
                   />

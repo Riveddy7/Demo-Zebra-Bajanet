@@ -2,8 +2,6 @@ export const metadata = {
   title: 'IAMET Real Time Tracker - RFID',
   description: 'Sistema de monitoreo RFID en tiempo real para inventario y seguimiento de activos',
   manifest: '/manifest.json',
-  themeColor: '#007AFF',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -22,6 +20,17 @@ export const metadata = {
       { url: '/icon-180x180.png', sizes: '180x180', type: 'image/png' },
     ],
   },
+}
+
+export function generateViewport() {
+  return {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: 'cover',
+    themeColor: '#007AFF',
+  }
 }
 
 export default function RootLayout({ children }) {
